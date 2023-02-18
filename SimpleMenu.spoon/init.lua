@@ -1,6 +1,17 @@
 local obj = {}
 obj.__index = obj
 
+-- Metadata
+obj.name = "SimpleMenu"
+obj.version = "0.1"
+obj.author = "Inkyu Park <badugiss@gmail.com>"
+obj.homepage = "https://github.com/badugiss/Spoons"
+obj.license = "MIT - https://opensource.org/licenses/MIT"
+
+obj.logger = hs.logger.new(obj.name)
+
+obj.menu = nil
+
 local keySymbols = {
     cmd = '⌘',
     command = '⌘',
@@ -56,15 +67,15 @@ function obj:read(path)
 end
 
 function obj:start()
-    -- createMenuFn(menuData.menu)
+    createMenuFn(self.menu[1].menu)
 
-    -- self.menubar = hs.menubar.new():setTitle(menuData.title):setMenu(menuData.menu)
+    self.menubar = hs.menubar.new():setTitle(self.menu[1].title):setMenu(self.menu[1].menu)
 
-    -- self.timer = hs.timer.new(1, function()
-    --     if not self.menubar:isInMenuBar() then
-    --         self.menubar:returnToMenuBar()
-    --     end
-    -- end):start()
+    self.timer = hs.timer.new(1, function()
+        if not self.menubar:isInMenuBar() then
+            self.menubar:returnToMenuBar()
+        end
+    end):start()
 end
 
 return obj
