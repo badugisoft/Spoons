@@ -20,7 +20,7 @@ obj.logger = hs.logger.new(obj.name)
 
 --- DarkMode:change()
 --- Method
---- Set dark mode
+--- Change to dark mode
 function obj:change(isDarkMode)
   hs.osascript.applescript(string.format([[
       tell application "System Events"
@@ -33,7 +33,7 @@ end
 
 --- DarkMode:toggle()
 --- Method
---- Toggle dark mode
+--- Toggle between dark and light mode
 function obj:toggle()
   hs.osascript.applescript([[
       tell application "System Events"

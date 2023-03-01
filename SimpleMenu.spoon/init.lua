@@ -12,6 +12,9 @@ obj.logger = hs.logger.new(obj.name)
 
 obj.menu = nil
 
+obj.timer = {}
+obj.menubar = {}
+
 local keySymbols = {
     cmd = '⌘',
     command = '⌘',
@@ -67,15 +70,17 @@ function obj:read(path)
 end
 
 function obj:start()
-    createMenuFn(self.menu[1].menu)
+  for i, v in ipairs(self.menu) do
+    createMenuFn(self.menu[i].menu)
 
-    self.menubar = hs.menubar.new():setTitle(self.menu[1].title):setMenu(self.menu[1].menu)
+    self.menubar[i] = hs.menubar.new():setTitle(self.menu[i].title):setMenu(self.menu[i].menu)
 
-    self.timer = hs.timer.new(1, function()
-        if not self.menubar:isInMenuBar() then
-            self.menubar:returnToMenuBar()
+    self.timer[i] = hs.timer.new(1, function()
+        if not self.menubar[i]:isInMenuBar() then
+            self.menubar[i]:returnToMenuBar()
         end
     end):start()
+  end
 end
 
 return obj
