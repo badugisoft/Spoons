@@ -23,11 +23,11 @@ obj.logger = hs.logger.new(obj.name)
 --- Change to dark mode
 function obj:change(isDarkMode)
   hs.osascript.applescript(string.format([[
-      tell application "System Events"
-          tell appearance preferences
-              set dark mode to %s
-          end tell
+    tell application "System Events"
+      tell appearance preferences
+        set dark mode to %s
       end tell
+    end tell
   ]], isDarkMode))
 end
 
@@ -36,11 +36,11 @@ end
 --- Toggle between dark and light mode
 function obj:toggle()
   hs.osascript.applescript([[
-      tell application "System Events"
-          tell appearance preferences
-              set dark mode to not dark mode
-          end tell
+    tell application "System Events"
+      tell appearance preferences
+        set dark mode to not dark mode
       end tell
+    end tell
   ]])
 end
 
@@ -48,11 +48,11 @@ end
 --- Method
 --- Bind hotkeys
 function obj:bindHotkeys(mapping)
-    hs.spoons.bindHotkeysToSpec({
-        change = hs.fnutils.partial(self.change, self),
-        toggle = hs.fnutils.partial(self.toggle, self),
-    }, mapping)
-    return self
+  hs.spoons.bindHotkeysToSpec({
+    change = hs.fnutils.partial(self.change, self),
+    toggle = hs.fnutils.partial(self.toggle, self),
+  }, mapping)
+  return self
 end
 
 return obj
