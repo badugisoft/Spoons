@@ -37,11 +37,11 @@ end
 --- Method
 --- Bind hotkeys
 function obj:bindHotkeys(mapping)
-    hs.spoons.bindHotkeysToSpec({
-        change = hs.fnutils.partial(self.change, self),
-        toggle = hs.fnutils.partial(self.toggle, self),
-    }, mapping)
-    return self
+  hs.spoons.bindHotkeysToSpec({
+    change = hs.fnutils.partial(self.change, self),
+    toggle = hs.fnutils.partial(self.toggle, self),
+  }, mapping)
+  return self
 end
 
 return obj

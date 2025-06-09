@@ -54,7 +54,9 @@ obj.y2 = nil
 obj.rectDisplaySeconds = 10
 
 --- Local functions
-local function screenRect() return hs.window.focusedWindow():screen():frame() end
+local function screenRect()
+  return hs.window.focusedWindow():screen():frame()
+end
 
 local function moveWindow(x, y, w, h)
   hs.window.focusedWindow():move(hs.geometry(x, y, w, h))
@@ -88,29 +90,53 @@ end
 --- StickWindow:toLeft()
 --- Method
 --- Start watching applications
-function obj:toLeft() self:_toLeft(self.x) end
+function obj:toLeft()
+  self:_toLeft(self.x)
+end
 
-function obj:toRight() self:_toRight(self.x) end
+function obj:toRight()
+  self:_toRight(self.x)
+end
 
-function obj:toTop() self:_toTop(self.y) end
+function obj:toTop()
+  self:_toTop(self.y)
+end
 
-function obj:toBottom() self:_toBottom(self.y) end
+function obj:toBottom()
+  self:_toBottom(self.y)
+end
 
-function obj:toLeft1() self:_toLeft(self.x1) end
+function obj:toLeft1()
+  self:_toLeft(self.x1)
+end
 
-function obj:toRight1() self:_toRight(self.x1) end
+function obj:toRight1()
+  self:_toRight(self.x1)
+end
 
-function obj:toTop1() self:_toTop(self.y1) end
+function obj:toTop1()
+  self:_toTop(self.y1)
+end
 
-function obj:toBottom1() self:_toBottom(self.y1) end
+function obj:toBottom1()
+  self:_toBottom(self.y1)
+end
 
-function obj:toLeft2() self:_toLeft(self.x2) end
+function obj:toLeft2()
+  self:_toLeft(self.x2)
+end
 
-function obj:toRight2() self:_toRight(self.x2) end
+function obj:toRight2()
+  self:_toRight(self.x2)
+end
 
-function obj:toTop2() self:_toTop(self.y2) end
+function obj:toTop2()
+  self:_toTop(self.y2)
+end
 
-function obj:toBottom2() self:_toBottom(self.y2) end
+function obj:toBottom2()
+  self:_toBottom(self.y2)
+end
 
 --- StickWindow:showRect()
 --- Method
@@ -125,7 +151,7 @@ function obj:showRect()
   end
 
   local r = hs.window.focusedWindow():frame()
-  local text = string.format('Left: %d\nTop: %d\nWidth: %d\nHeight: %d', r.x, r.y, r.w, r.h)
+  local text = string.format("Left: %d\nTop: %d\nWidth: %d\nHeight: %d", r.x, r.y, r.w, r.h)
   self.alertUuid = hs.alert(text, {}, hs.screen.mainScreen(), "")
   self.closeTimer = hs.timer.doAfter(self.rectDisplaySeconds or 10, function()
     hs.alert.closeSpecific(self.alertUuid)

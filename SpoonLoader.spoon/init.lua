@@ -14,43 +14,44 @@ obj.homepage = "https://github.com/badugisoft/Spoons"
 obj.license = "MIT - https://opensource.org/licenses/MIT"
 
 --
-local function dumpTable(o) print(hs.json.encode(o or {}, true)) end
+local function dumpTable(o)
+  print(hs.json.encode(o or {}, true))
+end
 
 --- SpoonLoader.logger
 --- Variable
 --- Logger object used within the Spoon. Can be accessed to set the default log level for the messages coming from the Spoon.
-obj.logger = hs.logger.new('SpoonLoader')
+obj.logger = hs.logger.new("SpoonLoader")
 
 --- Some internal variable
-local TinyYaml = hs.loadSpoon('TinyYaml')
+local TinyYaml = hs.loadSpoon("TinyYaml")
 
 --- SpoonLoader.configPath
 --- Variable
 --- Configuration yaml file path. Default value is "./spoons.yaml".
-obj.configPath = './spoons.yaml'
+obj.configPath = "./spoons.yaml"
 
 --- SpoonLoader:init()
 --- Method
 --- Init
-function obj:init()
-end
+function obj:init() end
 
 --- SpoonLoader:start()
 --- Method
 --- Start to load spoons
 function obj:start()
-    self.logger.df('start')
+  self.logger.df("start")
 
-    local data = TinyYaml:load(self.configPath)
+  local data = TinyYaml:load(self.configPath)
 
-    for _, elem in ipairs(data) do
-        local success = hs.spoons.use(elem.name, elem, true)
-        if not success then
-            self.logger.ef('failed to start : %s', elem.name)
-        end
+  for _, elem in ipairs(data) do
+    local success = hs.spoons.use(elem.name, elem, true)
+    if not success then
+      self.logger.ef("failed to start : %s", elem.name)
     end
+  end
 
-    self.logger.df('started')
+  self.logger.df("started")
 end
 
 return obj

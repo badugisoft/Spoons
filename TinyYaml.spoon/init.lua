@@ -29,21 +29,23 @@ obj.Parser = yaml.Parser
 --- TinyYaml:decode()
 --- Method
 --- decode
-function obj:decode(source, options) return yaml.parse(source, options) end
+function obj:decode(source, options)
+  return yaml.parse(source, options)
+end
 
 --- TinyYaml:load()
 --- Method
 --- load
 function obj:load(path, options)
-    local file = io.open(path, "r")
+  local file = io.open(path, "r")
 
-    if file ~= nil then
-        local tbl  = yaml.parse(file:read('*all'), options)
-        file:close()
-        return tbl
-    end
+  if file ~= nil then
+    local tbl = yaml.parse(file:read("*all"), options)
+    file:close()
+    return tbl
+  end
 
-    return nil
+  return nil
 end
 
 return obj

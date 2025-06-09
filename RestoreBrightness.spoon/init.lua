@@ -6,9 +6,9 @@ obj.delaySeconds = 1
 obj.brightness = 100
 
 local PowerSource <const> = {
-  AC = 'AC Power',
-  Battery = 'Battery Power',
-  Off = 'Off Line'
+  AC = "AC Power",
+  Battery = "Battery Power",
+  Off = "Off Line",
 }
 
 function obj:init()
