@@ -57,32 +57,32 @@ obj.rectDisplaySeconds = 10
 local function screenRect() return hs.window.focusedWindow():screen():frame() end
 
 local function moveWindow(x, y, w, h)
-    hs.window.focusedWindow():move(hs.geometry(x, y, w, h))
+  hs.window.focusedWindow():move(hs.geometry(x, y, w, h))
 end
 
 --- Internal functions
 function obj:_toLeft(x)
-    local s = screenRect()
-    local d = x or (s.w / 2)
-    moveWindow(s.x, s.y, d, s.h)
+  local s = screenRect()
+  local d = x or (s.w / 2)
+  moveWindow(s.x, s.y, d, s.h)
 end
 
 function obj:_toRight(x)
-    local s = screenRect()
-    local d = x or (s.w / 2)
-    moveWindow(s.x + d + 1, s.y, s.w - d - 1, s.h)
+  local s = screenRect()
+  local d = x or (s.w / 2)
+  moveWindow(s.x + d + 1, s.y, s.w - d - 1, s.h)
 end
 
 function obj:_toTop(y)
-    local s = screenRect()
-    local d = y or (s.h / 2)
-    moveWindow(s.x, s.y, s.w, d)
+  local s = screenRect()
+  local d = y or (s.h / 2)
+  moveWindow(s.x, s.y, s.w, d)
 end
 
 function obj:_toBottom(y)
-    local s = screenRect()
-    local d = y or (s.h / 2)
-    moveWindow(s.x, s.y + d + 1, s.w, s.h - d - 1)
+  local s = screenRect()
+  local d = y or (s.h / 2)
+  moveWindow(s.x, s.y + d + 1, s.w, s.h - d - 1)
 end
 
 --- StickWindow:toLeft()
@@ -116,32 +116,44 @@ function obj:toBottom2() self:_toBottom(self.y2) end
 --- Method
 --- Show current windows's rect
 function obj:showRect()
-    local r = hs.window.focusedWindow():frame()
-    local text = string.format('Left: %d\nTop: %d\nWidth: %d\nHeight: %d',
-        r.x, r.y, r.w, r.h)
-    hs.alert(text, {}, hs.screen.mainScreen(), self.rectDisplaySeconds or 10)
+  if self.closeTimer then
+    self.closeTimer:stop()
+    hs.alert.closeSpecific(self.alertUuid)
+    self.alertUuid = nil
+    self.closeTimer = nil
+    return
+  end
+
+  local r = hs.window.focusedWindow():frame()
+  local text = string.format('Left: %d\nTop: %d\nWidth: %d\nHeight: %d', r.x, r.y, r.w, r.h)
+  self.alertUuid = hs.alert(text, {}, hs.screen.mainScreen(), "")
+  self.closeTimer = hs.timer.doAfter(self.rectDisplaySeconds or 10, function()
+    hs.alert.closeSpecific(self.alertUuid)
+    self.alertUuid = nil
+    self.closeTimer = nil
+  end)
 end
 
 --- StickWindow:bindHotKeys()
 --- Method
 --- Bind hotkeys
 function obj:bindHotkeys(mapping)
-    hs.spoons.bindHotkeysToSpec({
-        toLeft = hs.fnutils.partial(self.toLeft, self),
-        toRight = hs.fnutils.partial(self.toRight, self),
-        toTop = hs.fnutils.partial(self.toTop, self),
-        toBottom = hs.fnutils.partial(self.toBottom, self),
-        toLeft1 = hs.fnutils.partial(self.toLeft1, self),
-        toRight1 = hs.fnutils.partial(self.toRight1, self),
-        toTop1 = hs.fnutils.partial(self.toTop1, self),
-        toBottom1 = hs.fnutils.partial(self.toBottom1, self),
-        toLeft2 = hs.fnutils.partial(self.toLeft2, self),
-        toRight2 = hs.fnutils.partial(self.toRight2, self),
-        toTop2 = hs.fnutils.partial(self.toTop2, self),
-        toBottom2 = hs.fnutils.partial(self.toBottom2, self),
-        showRect = hs.fnutils.partial(self.showRect, self),
-    }, mapping)
-    return self
+  hs.spoons.bindHotkeysToSpec({
+    toLeft = hs.fnutils.partial(self.toLeft, self),
+    toRight = hs.fnutils.partial(self.toRight, self),
+    toTop = hs.fnutils.partial(self.toTop, self),
+    toBottom = hs.fnutils.partial(self.toBottom, self),
+    toLeft1 = hs.fnutils.partial(self.toLeft1, self),
+    toRight1 = hs.fnutils.partial(self.toRight1, self),
+    toTop1 = hs.fnutils.partial(self.toTop1, self),
+    toBottom1 = hs.fnutils.partial(self.toBottom1, self),
+    toLeft2 = hs.fnutils.partial(self.toLeft2, self),
+    toRight2 = hs.fnutils.partial(self.toRight2, self),
+    toTop2 = hs.fnutils.partial(self.toTop2, self),
+    toBottom2 = hs.fnutils.partial(self.toBottom2, self),
+    showRect = hs.fnutils.partial(self.showRect, self),
+  }, mapping)
+  return self
 end
 
 return obj
