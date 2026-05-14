@@ -160,6 +160,26 @@ function obj:showRect()
   end)
 end
 
+--- StickWindow:saveRect()
+--- Method
+--- Save current windows's rect
+function obj:saveRect()
+  local w = hs.window.focusedWindow()
+  local r = w:frame()
+
+  hs.settings.set("StickWindow.Pos." .. w:application():name(), r.table)
+end
+
+--- StickWindow:restoreRect()
+--- Method
+--- Restore current windows's rect
+function obj:restoreRect()
+  local w = hs.window.focusedWindow()
+  local r = hs.settings.get("StickWindow.Pos." .. w:application():name())
+
+  hs.window.focusedWindow():move(hs.geometry(r))
+end
+
 --- StickWindow:bindHotKeys()
 --- Method
 --- Bind hotkeys
@@ -178,6 +198,8 @@ function obj:bindHotkeys(mapping)
     toTop2 = hs.fnutils.partial(self.toTop2, self),
     toBottom2 = hs.fnutils.partial(self.toBottom2, self),
     showRect = hs.fnutils.partial(self.showRect, self),
+    saveRect = hs.fnutils.partial(self.saveRect, self),
+    restoreRect = hs.fnutils.partial(self.restoreRect, self),
   }, mapping)
   return self
 end
