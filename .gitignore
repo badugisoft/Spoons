@@ -7,7 +7,6 @@
 .Trashes
 
 # Editor
-.vscode/
 .idea/
 *.swp
 *~
