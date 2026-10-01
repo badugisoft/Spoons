@@ -48,6 +48,7 @@ local function createItem(itemConfig)
     padding = itemConfig.padding or 6,
     keepInBackground = (itemConfig.keepInBackground ~= false), -- default true
     closeOnBlur = (itemConfig.closeOnBlur ~= false), -- default true for popovers
+    reloadOnOpen = (itemConfig.reloadOnOpen == true), -- default false
     position = itemConfig.position or "menubar", -- "menubar" or "center"
     popoverStyle = (itemConfig.popoverStyle ~= false), -- default true for native popover frame
     borderRadius = itemConfig.borderRadius or 16,
@@ -324,6 +325,7 @@ local function toggleWebView(item)
       item.canvas:show()
     end
 
+    local isReopen = (item.webview ~= nil)
     local wv = setupWebView(item)
 
     local wvX = x + padding
@@ -335,6 +337,19 @@ local function toggleWebView(item)
     wv:show()
     if item.popoverStyle then
       applyWebViewCSS(wv, (item.borderRadius or 16) - padding)
+    end
+
+    if isReopen then
+      if item.reloadOnOpen then
+        wv:reload()
+      else
+        wv:evaluateJavaScript([[
+          try {
+            document.dispatchEvent(new Event('visibilitychange'));
+            window.dispatchEvent(new Event('focus'));
+          } catch (e) {}
+        ]])
+      end
     end
 
     if wv:hswindow() then wv:hswindow():focus() end
@@ -380,6 +395,7 @@ function obj:start()
         padding = self.padding,
         keepInBackground = self.keepInBackground,
         closeOnBlur = self.closeOnBlur,
+        reloadOnOpen = self.reloadOnOpen,
         position = self.position,
         popoverStyle = self.popoverStyle,
         borderRadius = self.borderRadius,
