@@ -45,13 +45,13 @@ local function createItem(itemConfig)
     url = itemConfig.url or "https://www.google.com",
     width = itemConfig.width or 800,
     height = itemConfig.height or 600,
-    padding = itemConfig.padding or 6,
+    padding = itemConfig.padding or 4,
     keepInBackground = (itemConfig.keepInBackground ~= false), -- default true
-    closeOnBlur = (itemConfig.closeOnBlur ~= false), -- default true for popovers
-    reloadOnOpen = (itemConfig.reloadOnOpen == true), -- default false
-    position = itemConfig.position or "menubar", -- "menubar" or "center"
-    popoverStyle = (itemConfig.popoverStyle ~= false), -- default true for native popover frame
-    borderRadius = itemConfig.borderRadius or 16,
+    closeOnBlur = (itemConfig.closeOnBlur ~= false),           -- default true for popovers
+    reloadOnOpen = (itemConfig.reloadOnOpen == true),          -- default false
+    position = itemConfig.position or "menubar",               -- "menubar" or "center"
+    popoverStyle = (itemConfig.popoverStyle ~= false),         -- default true for native popover frame
+    borderRadius = itemConfig.borderRadius or 12,
     borderWidth = itemConfig.borderWidth or 1.5,
     offsetY = itemConfig.offsetY or 2,
     hotkey = itemConfig.hotkey,
@@ -261,7 +261,7 @@ local function setupWebView(item)
   local wv = hs.webview.new(hs.geometry.rect(wvX, wvY, wvW, wvH), { developerExtras = true })
 
   if item.popoverStyle then
-    wv:windowStyle({"borderless"})
+    wv:windowStyle({ "borderless" })
     wv:transparent(true)
     wv:level(hs.drawing.windowLevels.popUpMenu)
   end
