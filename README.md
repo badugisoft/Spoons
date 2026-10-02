@@ -14,7 +14,7 @@ Hammerspoon Spoons collection.
 - **SpoonLoader.spoon**: YAML 기반 스푼 일괄 로더
 - **StickWindow.spoon**: 창 고정 및 위치 이동 스푼
 - **TinyYaml.spoon**: 경량 YAML 파서
-- **WebView.spoon**: 메뉴바 아이콘 클릭 시 웹뷰 팝오버를 표시하는 스푼
+- **WebView.spoon**: 메뉴바 아이콘 클릭 시 웹뷰 팝오버를 표시하는 스푼 (우측 하단 리로드 버튼 제공)
 
 ### WebView.spoon 설정 옵션
 
@@ -32,4 +32,5 @@ Hammerspoon Spoons collection.
         keepInBackground: true  # 창이 닫혀도 백그라운드에 웹뷰 유지 (기본값: true)
         closeOnBlur: true       # 포커스를 잃거나 외부 클릭 시 창 닫기 (기본값: true)
         reloadOnOpen: false     # 창이 다시 열릴 때 전체 새로고침 여부 (기본값: false, 창 열릴 때 visibilitychange/focus 이벤트 전달)
+        showReloadButton: true  # 웹뷰 우측 하단 새로고침(리로드) 버튼 표시 여부 (기본값: true)
 ```

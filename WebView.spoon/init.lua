@@ -49,6 +49,7 @@ local function createItem(itemConfig)
     keepInBackground = (itemConfig.keepInBackground ~= false), -- default true
     closeOnBlur = (itemConfig.closeOnBlur ~= false),           -- default true for popovers
     reloadOnOpen = (itemConfig.reloadOnOpen == true),          -- default false
+    showReloadButton = (itemConfig.showReloadButton ~= false), -- default true
     position = itemConfig.position or "menubar",               -- "menubar" or "center"
     popoverStyle = (itemConfig.popoverStyle ~= false),         -- default true for native popover frame
     borderRadius = itemConfig.borderRadius or 12,
@@ -157,6 +158,81 @@ local function applyWebViewCSS(wv, radius)
     })();
   ]], r, r)
 
+  wv:evaluateJavaScript(js)
+end
+
+local function injectReloadButton(wv)
+  local js = [[
+    (function() {
+      var inject = function() {
+        if (!document.body || document.getElementById('__hs_reload_btn__')) return;
+        var btn = document.createElement('div');
+        btn.id = '__hs_reload_btn__';
+        btn.title = 'Reload';
+        btn.style.position = 'fixed';
+        btn.style.right = '10px';
+        btn.style.bottom = '10px';
+        btn.style.width = '24px';
+        btn.style.height = '24px';
+        btn.style.borderRadius = '50%';
+        btn.style.background = 'rgba(30, 30, 30, 0.6)';
+        btn.style.backdropFilter = 'blur(6px)';
+        btn.style.webkitBackdropFilter = 'blur(6px)';
+        btn.style.border = '1px solid rgba(255, 255, 255, 0.2)';
+        btn.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.25)';
+        btn.style.display = 'flex';
+        btn.style.alignItems = 'center';
+        btn.style.justifyContent = 'center';
+        btn.style.cursor = 'pointer';
+        btn.style.opacity = '0.35';
+        btn.style.transition = 'opacity 0.2s ease, transform 0.2s ease, background 0.2s ease';
+        btn.style.zIndex = '2147483647';
+        btn.style.userSelect = 'none';
+        btn.style.webkitUserSelect = 'none';
+        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none;display:block;"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>';
+
+        btn.addEventListener('mouseenter', function() {
+          btn.style.opacity = '1.0';
+          btn.style.background = 'rgba(40, 40, 40, 0.85)';
+          btn.style.transform = 'scale(1.08)';
+        });
+        btn.addEventListener('mouseleave', function() {
+          btn.style.opacity = '0.35';
+          btn.style.background = 'rgba(30, 30, 30, 0.6)';
+          btn.style.transform = 'scale(1.0)';
+        });
+        btn.addEventListener('mousedown', function(e) {
+          e.stopPropagation();
+          btn.style.transform = 'scale(0.92)';
+        });
+        btn.addEventListener('mouseup', function(e) {
+          e.stopPropagation();
+          btn.style.transform = 'scale(1.08)';
+        });
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          var svg = btn.querySelector('svg');
+          if (svg) {
+            svg.style.transition = 'transform 0.4s ease';
+            svg.style.transform = 'rotate(360deg)';
+          }
+          setTimeout(function() {
+            window.location.reload();
+          }, 100);
+        });
+
+        document.body.appendChild(btn);
+      };
+
+      if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        inject();
+      } else {
+        document.addEventListener('DOMContentLoaded', inject);
+        window.addEventListener('load', inject);
+      }
+    })();
+  ]]
   wv:evaluateJavaScript(js)
 end
 
@@ -274,6 +350,9 @@ local function setupWebView(item)
     if item.popoverStyle then
       applyWebViewCSS(webview, (item.borderRadius or 16) - padding)
     end
+    if item.showReloadButton then
+      injectReloadButton(webview)
+    end
   end)
 
   wv:windowCallback(function(action, webview, state)
@@ -338,6 +417,9 @@ local function toggleWebView(item)
     if item.popoverStyle then
       applyWebViewCSS(wv, (item.borderRadius or 16) - padding)
     end
+    if item.showReloadButton then
+      injectReloadButton(wv)
+    end
 
     if isReopen then
       if item.reloadOnOpen then
@@ -396,6 +478,7 @@ function obj:start()
         keepInBackground = self.keepInBackground,
         closeOnBlur = self.closeOnBlur,
         reloadOnOpen = self.reloadOnOpen,
+        showReloadButton = self.showReloadButton,
         position = self.position,
         popoverStyle = self.popoverStyle,
         borderRadius = self.borderRadius,

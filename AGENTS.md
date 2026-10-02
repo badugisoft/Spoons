@@ -11,7 +11,7 @@ Hammerspoon Spoon 플러그인 모음 저장소입니다.
 
 ## Spoons
 
-- `WebView.spoon`: 메뉴바 아이콘 연동 웹뷰 팝오버 표시. 외부 클릭 감지(`hs.eventtap`), 포커스 감지(`focusChange`), 창 재오픈 시 W3C 표준 이벤트(`visibilitychange`, `focus`) 전달 및 `reloadOnOpen` 옵션 지원.
+- `WebView.spoon`: 메뉴바 아이콘 연동 웹뷰 팝오버 표시. 외부 클릭 감지(`hs.eventtap`), 포커스 감지(`focusChange`), 창 재오픈 시 W3C 표준 이벤트(`visibilitychange`, `focus`) 전달, `reloadOnOpen` 옵션 및 우측 하단 페이지 리로드 버튼(`showReloadButton`) 지원.
 - `DarkMode.spoon`, `ExitOnClose.spoon`, `FullScreen.spoon`, `KillAppOnLock.spoon`, `MuteOnBattery.spoon`, `RestoreBrightness.spoon`, `SimpleMenu.spoon`, `StickWindow.spoon`, `TinyYaml.spoon`
 
 ## Guidelines
