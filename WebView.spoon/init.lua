@@ -50,6 +50,7 @@ local function createItem(itemConfig)
     closeOnBlur = (itemConfig.closeOnBlur ~= false),           -- default true for popovers
     reloadOnOpen = (itemConfig.reloadOnOpen == true),          -- default false
     showReloadButton = (itemConfig.showReloadButton ~= false), -- default true
+    showBackButton = (itemConfig.showBackButton ~= false),     -- default true
     position = itemConfig.position or "menubar",               -- "menubar" or "center"
     popoverStyle = (itemConfig.popoverStyle ~= false),         -- default true for native popover frame
     borderRadius = itemConfig.borderRadius or 12,
@@ -57,6 +58,7 @@ local function createItem(itemConfig)
     offsetY = itemConfig.offsetY or 2,
     hotkey = itemConfig.hotkey,
     webview = nil,
+    userContent = nil,
     canvas = nil,
     menubar = nil,
     clickTap = nil
@@ -143,10 +145,8 @@ local function applyWebViewCSS(wv, radius)
       var apply = function() {
         document.documentElement.style.backgroundColor = "transparent";
         document.documentElement.style.borderRadius = "%s";
-        document.documentElement.style.overflow = "hidden";
         if (document.body) {
           document.body.style.borderRadius = "%s";
-          document.body.style.overflow = "hidden";
         }
       };
       if (document.readyState === 'complete' || document.readyState === 'interactive') {
@@ -161,21 +161,38 @@ local function applyWebViewCSS(wv, radius)
   wv:evaluateJavaScript(js)
 end
 
-local function injectReloadButton(wv)
-  local js = [[
+local function canGoBack(wv)
+  if not wv then return false end
+  local history = wv:historyList()
+  return type(history) == "table" and type(history.current) == "number" and history.current > 1
+end
+
+local function updateNavControls(item, wv)
+  if not wv then return end
+  local showBack = item.showBackButton and canGoBack(wv)
+  local showReload = item.showReloadButton
+  if not item.showBackButton and not showReload then return end
+
+  local js = string.format(
+    "window.__hsNavState__ = { enableBack: %s, showBack: %s, showReload: %s };\n",
+    tostring(item.showBackButton),
+    tostring(showBack),
+    tostring(showReload)
+  ) .. [[
     (function() {
-      var inject = function() {
-        if (!document.body || document.getElementById('__hs_reload_btn__')) return;
+      var resetButtonVisual = function(btn) {
+        btn.style.opacity = '0.35';
+        btn.style.background = 'rgba(30, 30, 30, 0.6)';
+        btn.style.transform = 'scale(1.0)';
+      };
+
+      var createNavButton = function(id, title, svgHtml, onClick) {
         var btn = document.createElement('div');
-        btn.id = '__hs_reload_btn__';
-        btn.title = 'Reload';
-        btn.style.position = 'fixed';
-        btn.style.right = '10px';
-        btn.style.bottom = '10px';
+        btn.id = id;
+        btn.title = title;
         btn.style.width = '24px';
         btn.style.height = '24px';
         btn.style.borderRadius = '50%';
-        btn.style.background = 'rgba(30, 30, 30, 0.6)';
         btn.style.backdropFilter = 'blur(6px)';
         btn.style.webkitBackdropFilter = 'blur(6px)';
         btn.style.border = '1px solid rgba(255, 255, 255, 0.2)';
@@ -184,12 +201,12 @@ local function injectReloadButton(wv)
         btn.style.alignItems = 'center';
         btn.style.justifyContent = 'center';
         btn.style.cursor = 'pointer';
-        btn.style.opacity = '0.35';
         btn.style.transition = 'opacity 0.2s ease, transform 0.2s ease, background 0.2s ease';
-        btn.style.zIndex = '2147483647';
         btn.style.userSelect = 'none';
         btn.style.webkitUserSelect = 'none';
-        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none;display:block;"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>';
+        btn.style.pointerEvents = 'auto';
+        resetButtonVisual(btn);
+        btn.innerHTML = svgHtml;
 
         btn.addEventListener('mouseenter', function() {
           btn.style.opacity = '1.0';
@@ -197,9 +214,7 @@ local function injectReloadButton(wv)
           btn.style.transform = 'scale(1.08)';
         });
         btn.addEventListener('mouseleave', function() {
-          btn.style.opacity = '0.35';
-          btn.style.background = 'rgba(30, 30, 30, 0.6)';
-          btn.style.transform = 'scale(1.0)';
+          resetButtonVisual(btn);
         });
         btn.addEventListener('mousedown', function(e) {
           e.stopPropagation();
@@ -212,27 +227,124 @@ local function injectReloadButton(wv)
         btn.addEventListener('click', function(e) {
           e.preventDefault();
           e.stopPropagation();
-          var svg = btn.querySelector('svg');
-          if (svg) {
-            svg.style.transition = 'transform 0.4s ease';
-            svg.style.transform = 'rotate(360deg)';
-          }
-          setTimeout(function() {
-            window.location.reload();
-          }, 100);
+          onClick(btn);
         });
+        return btn;
+      };
 
-        document.body.appendChild(btn);
+      var sync = function() {
+        var state = window.__hsNavState__;
+        if (!state || !document.body) return;
+
+        if (state.enableBack && !window.__hsNavHooked__) {
+          window.__hsNavHooked__ = true;
+          var notifySync = function() {
+            setTimeout(function() {
+              try {
+                if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.__hs_nav__) {
+                  window.webkit.messageHandlers.__hs_nav__.postMessage({ action: 'sync' });
+                }
+              } catch (e) {}
+            }, 0);
+          };
+          var origPushState = history.pushState;
+          if (typeof origPushState === 'function') {
+            history.pushState = function() {
+              var ret = origPushState.apply(this, arguments);
+              notifySync();
+              return ret;
+            };
+          }
+          window.addEventListener('popstate', notifySync);
+          window.addEventListener('hashchange', notifySync);
+          window.addEventListener('pageshow', function(e) {
+            if (e && e.persisted) notifySync();
+          });
+        }
+
+        var container = document.getElementById('__hs_nav_controls__');
+        if (!container) {
+          container = document.createElement('div');
+          container.id = '__hs_nav_controls__';
+          container.style.position = 'fixed';
+          container.style.right = '10px';
+          container.style.bottom = '10px';
+          container.style.display = 'flex';
+          container.style.alignItems = 'center';
+          container.style.gap = '6px';
+          container.style.zIndex = '2147483647';
+          container.style.pointerEvents = 'none';
+          document.body.appendChild(container);
+        }
+
+        var backBtn = document.getElementById('__hs_back_btn__');
+        if (!backBtn && state.enableBack) {
+          backBtn = createNavButton(
+            '__hs_back_btn__',
+            'Back',
+            '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none;display:block;"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg>',
+            function() {
+              try {
+                if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.__hs_nav__) {
+                  window.webkit.messageHandlers.__hs_nav__.postMessage({ action: 'goBack' });
+                } else {
+                  window.history.back();
+                }
+              } catch (err) {
+                window.history.back();
+              }
+            }
+          );
+          var existingReload = document.getElementById('__hs_reload_btn__');
+          if (existingReload) {
+            container.insertBefore(backBtn, existingReload);
+          } else {
+            container.appendChild(backBtn);
+          }
+        }
+        if (backBtn) {
+          if (state.showBack) {
+            backBtn.style.display = 'flex';
+          } else {
+            backBtn.style.display = 'none';
+            resetButtonVisual(backBtn);
+          }
+        }
+
+        var reloadBtn = document.getElementById('__hs_reload_btn__');
+        if (!reloadBtn && state.showReload) {
+          reloadBtn = createNavButton(
+            '__hs_reload_btn__',
+            'Reload',
+            '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none;display:block;"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>',
+            function(btn) {
+              var svg = btn.querySelector('svg');
+              if (svg) {
+                svg.style.transition = 'transform 0.4s ease';
+                svg.style.transform = 'rotate(360deg)';
+              }
+              setTimeout(function() {
+                window.location.reload();
+              }, 100);
+            }
+          );
+          container.appendChild(reloadBtn);
+        }
+        if (reloadBtn) {
+          reloadBtn.style.display = state.showReload ? 'flex' : 'none';
+        }
       };
 
       if (document.readyState === 'complete' || document.readyState === 'interactive') {
-        inject();
-      } else {
-        document.addEventListener('DOMContentLoaded', inject);
-        window.addEventListener('load', inject);
+        sync();
+      } else if (!window.__hsNavLoadBound__) {
+        window.__hsNavLoadBound__ = true;
+        document.addEventListener('DOMContentLoaded', sync);
+        window.addEventListener('load', sync);
       }
     })();
   ]]
+
   wv:evaluateJavaScript(js)
 end
 
@@ -257,6 +369,10 @@ local function closeWebView(item)
     if item.webview then
       item.webview:delete()
       item.webview = nil
+    end
+    if item.userContent then
+      item.userContent:setCallback(nil)
+      item.userContent = nil
     end
     if item.canvas then
       item.canvas:delete()
@@ -334,7 +450,24 @@ local function setupWebView(item)
   local wvW = w
   local wvH = h
 
-  local wv = hs.webview.new(hs.geometry.rect(wvX, wvY, wvW, wvH), { developerExtras = true })
+  local uc = nil
+  if item.showBackButton then
+    uc = hs.webview.usercontent.new("__hs_nav__")
+    uc:setCallback(function(msg)
+      if not item.webview or type(msg) ~= "table" or type(msg.body) ~= "table" then return end
+      local msgAction = msg.body.action
+      if msgAction == "goBack" then
+        if canGoBack(item.webview) then
+          item.webview:goBack()
+        end
+      elseif msgAction == "sync" then
+        updateNavControls(item, item.webview)
+      end
+    end)
+    item.userContent = uc
+  end
+
+  local wv = hs.webview.new(hs.geometry.rect(wvX, wvY, wvW, wvH), { developerExtras = true }, uc)
 
   if item.popoverStyle then
     wv:windowStyle({ "borderless" })
@@ -347,12 +480,13 @@ local function setupWebView(item)
   wv:windowTitle(item.title ~= "" and item.title or "WebView")
 
   wv:navigationCallback(function(action, webview, error)
+    if action == "didStartProvisionalNavigation" or action == "didReceiveServerRedirectForProvisionalNavigation" then
+      return
+    end
     if item.popoverStyle then
       applyWebViewCSS(webview, (item.borderRadius or 16) - padding)
     end
-    if item.showReloadButton then
-      injectReloadButton(webview)
-    end
+    updateNavControls(item, webview)
   end)
 
   wv:windowCallback(function(action, webview, state)
@@ -417,9 +551,7 @@ local function toggleWebView(item)
     if item.popoverStyle then
       applyWebViewCSS(wv, (item.borderRadius or 16) - padding)
     end
-    if item.showReloadButton then
-      injectReloadButton(wv)
-    end
+    updateNavControls(item, wv)
 
     if isReopen then
       if item.reloadOnOpen then
@@ -479,6 +611,7 @@ function obj:start()
         closeOnBlur = self.closeOnBlur,
         reloadOnOpen = self.reloadOnOpen,
         showReloadButton = self.showReloadButton,
+        showBackButton = self.showBackButton,
         position = self.position,
         popoverStyle = self.popoverStyle,
         borderRadius = self.borderRadius,
