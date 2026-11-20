@@ -51,6 +51,7 @@ local function createItem(itemConfig)
     reloadOnOpen = (itemConfig.reloadOnOpen == true),          -- default false
     showReloadButton = (itemConfig.showReloadButton ~= false), -- default true
     showBackButton = (itemConfig.showBackButton ~= false),     -- default true
+    openNewWindowInBrowser = (itemConfig.openNewWindowInBrowser ~= false), -- default true
     position = itemConfig.position or "menubar",               -- "menubar" or "center"
     popoverStyle = (itemConfig.popoverStyle ~= false),         -- default true for native popover frame
     borderRadius = itemConfig.borderRadius or 12,
@@ -489,6 +490,17 @@ local function setupWebView(item)
     updateNavControls(item, webview)
   end)
 
+  wv:policyCallback(function(action, webview, details)
+    if action == "newWindow" and item.openNewWindowInBrowser then
+      local targetUrl = type(details) == "table" and type(details.request) == "table" and details.request.URL
+      if type(targetUrl) == "string" and targetUrl:find("://", 1, true) then
+        hs.urlevent.openURL(targetUrl)
+      end
+      return false
+    end
+    return true
+  end)
+
   wv:windowCallback(function(action, webview, state)
     if action == "closing" then
       closeWebView(item)
@@ -612,6 +624,7 @@ function obj:start()
         reloadOnOpen = self.reloadOnOpen,
         showReloadButton = self.showReloadButton,
         showBackButton = self.showBackButton,
+        openNewWindowInBrowser = self.openNewWindowInBrowser,
         position = self.position,
         popoverStyle = self.popoverStyle,
         borderRadius = self.borderRadius,

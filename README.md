@@ -32,6 +32,7 @@ Hammerspoon Spoons collection.
         keepInBackground: true  # 창이 닫혀도 백그라운드에 웹뷰 유지 (기본값: true)
         closeOnBlur: true       # 포커스를 잃거나 외부 클릭 시 창 닫기 (기본값: true)
         reloadOnOpen: false     # 창이 다시 열릴 때 전체 새로고침 여부 (기본값: false, 창 열릴 때 visibilitychange/focus 이벤트 전달)
-        showReloadButton: true  # 웹뷰 우측 하단 새로고침(리로드) 버튼 표시 여부 (기본값: true)
-        showBackButton: true    # 뒤로 가기 가능 시 새로고침 버튼 왼쪽에 뒤로 가기 버튼 표시 여부 (기본값: true)
+        showReloadButton: true        # 웹뷰 우측 하단 새로고침(리로드) 버튼 표시 여부 (기본값: true)
+        showBackButton: true          # 뒤로 가기 가능 시 새로고침 버튼 왼쪽에 뒤로 가기 버튼 표시 여부 (기본값: true)
+        openNewWindowInBrowser: true  # 새 창 열기 요청을 기본 브라우저에서 실행 여부 (기본값: true)
 ```
