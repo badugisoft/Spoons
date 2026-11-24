@@ -58,11 +58,13 @@ local function createItem(itemConfig)
     borderWidth = itemConfig.borderWidth or 1.5,
     offsetY = itemConfig.offsetY or 2,
     hotkey = itemConfig.hotkey,
+    zoomLevel = 1.0,
     webview = nil,
     userContent = nil,
     canvas = nil,
     menubar = nil,
-    clickTap = nil
+    clickTap = nil,
+    keyTap = nil
   }
 end
 
@@ -356,8 +358,105 @@ local function stopClickTap(item)
   end
 end
 
+local function stopKeyTap(item)
+  if item.keyTap then
+    item.keyTap:stop()
+    item.keyTap = nil
+  end
+end
+
+local function applyZoom(item, wv)
+  if not wv then return end
+  local z = item.zoomLevel or 1.0
+  local js = string.format([[
+    (function() {
+      var z = %s;
+      var apply = function() {
+        if (document.documentElement) {
+          document.documentElement.style.zoom = (z === 1) ? '' : String(z);
+        }
+      };
+      if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        apply();
+      } else {
+        document.addEventListener('DOMContentLoaded', apply);
+        window.addEventListener('load', apply);
+      }
+    })();
+  ]], tostring(z))
+  wv:evaluateJavaScript(js)
+end
+
+local function adjustZoom(item, delta, reset)
+  if not item.webview then return end
+  if reset then
+    item.zoomLevel = 1.0
+  else
+    local current = item.zoomLevel or 1.0
+    local nextZoom = math.floor((current + delta) * 100 + 0.5) / 100
+    item.zoomLevel = math.max(0.5, math.min(3.0, nextZoom))
+  end
+  applyZoom(item, item.webview)
+end
+
+local function buildKeyCodeSet(names)
+  local set = {}
+  for _, name in ipairs(names) do
+    local code = hs.keycodes.map[name]
+    if code ~= nil then
+      set[code] = true
+    end
+  end
+  return set
+end
+
+local function startKeyTap(item)
+  stopKeyTap(item)
+
+  local zoomInCodes = buildKeyCodeSet({ "=", "pad+" })
+  local zoomOutCodes = buildKeyCodeSet({ "-", "pad-" })
+  local zoomResetCodes = buildKeyCodeSet({ "0", "pad0" })
+
+  item.keyTap = hs.eventtap.new({
+    hs.eventtap.event.types.keyDown,
+  }, function(event)
+    if not item.webview or not item.webview:isVisible() then
+      stopKeyTap(item)
+      return false
+    end
+
+    local win = item.webview:hswindow()
+    local focused = hs.window.focusedWindow()
+    if not win or not focused or win:id() ~= focused:id() then
+      return false
+    end
+
+    local flags = event:getFlags()
+    if not flags.cmd or flags.ctrl or flags.alt then
+      return false
+    end
+
+    local keyCode = event:getKeyCode()
+    if zoomInCodes[keyCode] then
+      adjustZoom(item, 0.1, false)
+      return true
+    elseif zoomOutCodes[keyCode] then
+      adjustZoom(item, -0.1, false)
+      return true
+    elseif zoomResetCodes[keyCode] then
+      adjustZoom(item, 0, true)
+      return true
+    end
+
+    return false
+  end)
+
+  item.keyTap:start()
+end
+
 local function closeWebView(item)
   stopClickTap(item)
+  stopKeyTap(item)
 
   if item.webview and item.webview:isVisible() then
     item.webview:hide()
@@ -487,6 +586,9 @@ local function setupWebView(item)
     if item.popoverStyle then
       applyWebViewCSS(webview, (item.borderRadius or 16) - padding)
     end
+    if item.zoomLevel and item.zoomLevel ~= 1.0 then
+      applyZoom(item, webview)
+    end
     updateNavControls(item, webview)
   end)
 
@@ -581,6 +683,7 @@ local function toggleWebView(item)
     if wv:hswindow() then wv:hswindow():focus() end
 
     startClickTap(item)
+    startKeyTap(item)
   end
 end
 

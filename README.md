@@ -14,7 +14,7 @@ Hammerspoon Spoons collection.
 - **SpoonLoader.spoon**: YAML 기반 스푼 일괄 로더
 - **StickWindow.spoon**: 창 고정 및 위치 이동 스푼
 - **TinyYaml.spoon**: 경량 YAML 파서
-- **WebView.spoon**: 메뉴바 아이콘 클릭 시 웹뷰 팝오버를 표시하는 스푼 (우측 하단 뒤로 가기/리로드 버튼 제공)
+- **WebView.spoon**: 메뉴바 아이콘 클릭 시 웹뷰 팝오버를 표시하는 스푼 (우측 하단 뒤로 가기/리로드 버튼, 확대/축소 단축키 `Cmd + =/+`, `Cmd + -`, `Cmd + 0` 제공)
 
 ### WebView.spoon 설정 옵션
 
